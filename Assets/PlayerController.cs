@@ -5,9 +5,8 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Horizontal Momevement Settings")]
-    Rigidbody2D rb;
     [SerializeField] float walkSpeed = 1f;
-    float xAxis;
+    
 
     [Header("Ground Check Settings")]
     [SerializeField]float jumpForce = 45;
@@ -16,10 +15,30 @@ public class PlayerController : MonoBehaviour
     [SerializeField]float groundCheckX = 0.5f;
     [SerializeField]LayerMask groundLayer;
 
+    Rigidbody2D rb;
+    Animator animator;
+    float xAxis;
+
+
+    public static PlayerController Instance;
+
+    void Awake()
+    {
+        if(Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Instance = this;
+        }
+    }
+
     
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
     }
 
     // Update is called once per frame
@@ -28,6 +47,7 @@ public class PlayerController : MonoBehaviour
         GetInputs();
         Move();
         Jump();
+        Flip();
     }
 
     void GetInputs()
@@ -35,9 +55,17 @@ public class PlayerController : MonoBehaviour
         xAxis = Input.GetAxisRaw("Horizontal");
     }
 
+    void Flip(){
+        if(xAxis < 0)
+            transform.localScale = new Vector2(-1 , transform.localScale.y);
+        else if(xAxis > 0)
+            transform.localScale = new Vector2(1 , transform.localScale.y);
+    }
+
     void Move()
     {
         rb.velocity = new Vector2(walkSpeed * xAxis , rb.velocity.y);
+        animator.SetBool("Walking", rb.velocity.x != 0 && Grounded() );
     }
 
     public bool Grounded()
@@ -66,5 +94,7 @@ public class PlayerController : MonoBehaviour
         {
             rb.velocity = new Vector3(rb.velocity.x, jumpForce);
         }
+
+        animator.SetBool("Jumping", !Grounded());
     }
 }
