@@ -411,7 +411,7 @@ Rigidbody2D:
   m_LinearDrag: 0
   m_AngularDrag: 0.05
   m_GravityScale: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 709a464ce47638e49b85ae7556b433f3, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -548,7 +548,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   walkSpeed: 2
-  jumpForce: 45
+  jumpForce: 10
   grounCheckPoint: {fileID: 151665962}
   groundCheckY: 0.2
   groundCheckX: 0.5

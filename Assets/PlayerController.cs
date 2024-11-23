@@ -40,7 +40,6 @@ public class PlayerController : MonoBehaviour
         rb.velocity = new Vector2(walkSpeed * xAxis , rb.velocity.y);
     }
 
-    //Pesquisar sobre Raycast 
     public bool Grounded()
     {
         if(Physics2D.Raycast(grounCheckPoint.position, Vector2.down, groundCheckY, groundLayer) 
