@@ -28,6 +28,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float dashCooldown;
     [SerializeField] GameObject dashEffect;
 
+    [Header("Attack Settings")]
+    bool attack = false;
+    float timeBetweenAttack, timeSinceAttack;
+    [SerializeField] Transform SideAttackTransform, UpAttackTransform, DownAttackTransform;
+    [SerializeField] Vector2 SideAttackArea, UpAttackArea, DownAttackArea;
+
+
     PlayerStateList pState;
     Rigidbody2D rb;
     Animator animator;
@@ -60,6 +67,14 @@ public class PlayerController : MonoBehaviour
         gravity = rb.gravityScale;
     }
 
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(SideAttackTransform.position ,SideAttackArea);
+        Gizmos.DrawWireCube(UpAttackTransform.position ,UpAttackArea);
+        Gizmos.DrawWireCube(DownAttackTransform.position ,DownAttackArea);
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -70,12 +85,14 @@ public class PlayerController : MonoBehaviour
         Move();
         Jump();
         StartDash();
+        Attack();
         
     }
 
     void GetInputs()
     {
         xAxis = Input.GetAxisRaw("Horizontal");
+        attack = Input.GetKeyDown(KeyCode.F);
     }
 
     void Flip(){
@@ -83,6 +100,16 @@ public class PlayerController : MonoBehaviour
             transform.localScale = new Vector2(-1 , transform.localScale.y);
         else if(xAxis > 0)
             transform.localScale = new Vector2(1 , transform.localScale.y);
+    }
+
+    void Attack()
+    {
+        timeSinceAttack += Time.deltaTime;
+        if(timeSinceAttack > timeBetweenAttack && attack)
+        {
+            timeSinceAttack = 0;
+            animator.SetTrigger("Attacking");
+        }
     }
 
     void Move()
