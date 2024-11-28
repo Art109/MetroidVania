@@ -28,18 +28,22 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float dashCooldown;
     [SerializeField] GameObject dashEffect;
 
+
     [Header("Attack Settings")]
     bool attack = false;
     float timeBetweenAttack, timeSinceAttack;
     [SerializeField] Transform SideAttackTransform, UpAttackTransform, DownAttackTransform;
     [SerializeField] Vector2 SideAttackArea, UpAttackArea, DownAttackArea;
+    [SerializeField] LayerMask attackableLayer;
+    [SerializeField] float damage;
+    [SerializeField] GameObject slashEffect;
 
 
     PlayerStateList pState;
     Rigidbody2D rb;
     Animator animator;
     float gravity;
-    float xAxis;
+    float xAxis, yAxis;
     bool canDash = true;
     bool dashed;
 
@@ -92,6 +96,7 @@ public class PlayerController : MonoBehaviour
     void GetInputs()
     {
         xAxis = Input.GetAxisRaw("Horizontal");
+        yAxis = Input.GetAxisRaw("Vertical");
         attack = Input.GetKeyDown(KeyCode.F);
     }
 
@@ -109,7 +114,48 @@ public class PlayerController : MonoBehaviour
         {
             timeSinceAttack = 0;
             animator.SetTrigger("Attacking");
+
+            if(yAxis == 0 || yAxis < 0  && Grounded())
+            {
+                Hit(SideAttackTransform, SideAttackArea);
+                Instantiate(slashEffect, SideAttackTransform);
+            }
+            else if(yAxis > 0)
+            {
+                Hit(UpAttackTransform, UpAttackArea);
+                SlashEffectAngle(slashEffect, 90, UpAttackTransform);
+            }
+            else if(yAxis < 0 && !Grounded())
+            {
+                Hit(DownAttackTransform, DownAttackArea);
+                SlashEffectAngle(slashEffect, -90, DownAttackTransform);
+            }
         }
+    }
+
+    void Hit(Transform attackTransform, Vector2 attackArea)
+    {
+        Collider2D[] objectsToHit = Physics2D.OverlapBoxAll(attackTransform.position, attackArea , 0 , attackableLayer);
+
+        if(objectsToHit.Length > 0)
+        {
+            Debug.Log("Hit");
+            
+            foreach( var obj in objectsToHit)
+            {
+                if(obj.GetComponent<Enemy>() != null)
+                {
+                    obj.GetComponent<Enemy>().EnemyHit(damage);
+                }
+            }
+        }
+    }
+
+    void SlashEffectAngle(GameObject slashEffect, int effectAngle, Transform attackTransform)
+    {
+        slashEffect = Instantiate(slashEffect, attackTransform);
+        slashEffect.transform.eulerAngles = new Vector3(0,0,effectAngle);
+        slashEffect.transform.localScale = new Vector2(transform.localScale.x, transform.localScale.y);
     }
 
     void Move()
