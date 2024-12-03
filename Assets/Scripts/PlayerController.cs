@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -35,13 +36,17 @@ public class PlayerController : MonoBehaviour
 
 
     [Header("Attack Settings")]
-    bool attack = false;
-    float timeBetweenAttack, timeSinceAttack;
     [SerializeField] Transform SideAttackTransform, UpAttackTransform, DownAttackTransform;
     [SerializeField] Vector2 SideAttackArea, UpAttackArea, DownAttackArea;
+    bool attack = false;
+    [SerializeField] float timeBetweenAttack; 
+    float timeSinceAttack;
     [SerializeField] LayerMask attackableLayer;
     [SerializeField] float damage;
     [SerializeField] GameObject slashEffect;
+
+    bool restoreTime;
+    float restoreTimeSpeed;
     [Space(5)]
 
     [Header("Recoil Settings")]
@@ -54,6 +59,7 @@ public class PlayerController : MonoBehaviour
     [Header("Health Settings")]
     [SerializeField]int health;
     [SerializeField]int maxHealth;
+    [SerializeField] GameObject bloodSpurt;
 
 
     public PlayerStateList pState;
@@ -77,7 +83,7 @@ public class PlayerController : MonoBehaviour
         {
             Instance = this;
         }
-        health = maxHealth;
+        Health = maxHealth;
     }
 
     
@@ -108,15 +114,22 @@ public class PlayerController : MonoBehaviour
         Jump();
         StartDash();
         Attack();
-        Recoil();
+        RestoreTimeScale();
         
+    }
+
+    void FixedUpdate()
+    {
+        if(pState.dashing)
+            return;
+        Recoil();
     }
 
     void GetInputs()
     {
         xAxis = Input.GetAxisRaw("Horizontal");
         yAxis = Input.GetAxisRaw("Vertical");
-        attack = Input.GetKeyDown(KeyCode.F);
+        attack = Input.GetButtonDown("Attack");
     }
 
     void Flip(){
@@ -294,7 +307,7 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
-        health -= Mathf.RoundToInt(damage);
+        Health -= Mathf.RoundToInt(damage);
         
         StartCoroutine(StopTakingDamage());
     }
@@ -302,16 +315,65 @@ public class PlayerController : MonoBehaviour
     IEnumerator StopTakingDamage()
     {
         pState.invincible = true;
-        HealthClamp();
+        GameObject bloodSpurtParticles = Instantiate(bloodSpurt, transform.position, Quaternion.identity);
+        Destroy(bloodSpurtParticles, 1.5f);
         animator.SetTrigger("TakeDamage");
         yield return new WaitForSeconds(1f);
         pState.invincible = false;
     }
 
-    void HealthClamp()
+    void RestoreTimeScale()
     {
-        health = Mathf.Clamp(health, 0, maxHealth);
+        if(restoreTime)
+        {
+            if(Time.timeScale < 1)
+            {
+                Time.timeScale += Time.deltaTime * restoreTimeSpeed;
+            }
+            else
+            {
+                Time.timeScale = 1;
+                restoreTime = false;
+            }
+        }
     }
+
+    public void HitStopTime(float newTimeScale, int restoreSpeed, float delay)
+    {
+        restoreTimeSpeed = restoreSpeed;
+        Time.timeScale = newTimeScale;
+
+        if(delay > 0)
+        {
+            StopCoroutine(StartTimeAgain(delay));
+            StartCoroutine(StartTimeAgain(delay));
+        }
+        else
+        {
+            restoreTime = true;
+        }
+    }
+
+    IEnumerator StartTimeAgain(float delay)
+    {
+        restoreTime = true;
+        yield return new WaitForSeconds(delay);
+    }
+
+    public int Health
+    {
+        get{ return health;}
+
+        set
+        {
+            if(health != value)
+            {
+                health = Mathf.Clamp(value, 0, maxHealth);
+            }
+        }
+    }
+
+ 
     public bool Grounded()
     {
         if(Physics2D.Raycast(grounCheckPoint.position, Vector2.down, groundCheckY, groundLayer) 

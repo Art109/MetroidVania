@@ -64,6 +64,7 @@ public class Enemy : MonoBehaviour
         if(col.CompareTag("Player") &&  !PlayerController.Instance.pState.invincible)
         {
             Attack();
+            PlayerController.Instance.HitStopTime(0, 5, 0.5f);
         }
     }
 

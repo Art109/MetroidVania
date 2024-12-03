@@ -1015,6 +1015,7 @@ MonoBehaviour:
   SideAttackArea: {x: 4.5, y: 3.5}
   UpAttackArea: {x: 3.5, y: 4.5}
   DownAttackArea: {x: 3.5, y: 4.5}
+  timeBetweenAttack: 1
   attackableLayer:
     serializedVersion: 2
     m_Bits: 64
