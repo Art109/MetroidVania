@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -50,8 +51,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float recoilYSpeed = 100;
     int stepsXRecoiled, stepsYRecoiled;
 
+    [Header("Health Settings")]
+    [SerializeField]int health;
+    [SerializeField]int maxHealth;
 
-    PlayerStateList pState;
+
+    public PlayerStateList pState;
     Rigidbody2D rb;
     Animator animator;
     float gravity;
@@ -72,6 +77,7 @@ public class PlayerController : MonoBehaviour
         {
             Instance = this;
         }
+        health = maxHealth;
     }
 
     
@@ -286,6 +292,26 @@ public class PlayerController : MonoBehaviour
         pState.recoilingY = false;
     }
 
+    public void TakeDamage(float damage)
+    {
+        health -= Mathf.RoundToInt(damage);
+        
+        StartCoroutine(StopTakingDamage());
+    }
+
+    IEnumerator StopTakingDamage()
+    {
+        pState.invincible = true;
+        HealthClamp();
+        animator.SetTrigger("TakeDamage");
+        yield return new WaitForSeconds(1f);
+        pState.invincible = false;
+    }
+
+    void HealthClamp()
+    {
+        health = Mathf.Clamp(health, 0, maxHealth);
+    }
     public bool Grounded()
     {
         if(Physics2D.Raycast(grounCheckPoint.position, Vector2.down, groundCheckY, groundLayer) 
