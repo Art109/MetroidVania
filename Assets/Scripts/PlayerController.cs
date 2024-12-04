@@ -59,12 +59,17 @@ public class PlayerController : MonoBehaviour
     [Header("Health Settings")]
     [SerializeField]int health;
     [SerializeField]int maxHealth;
+    public int MaxHealth{ get{ return maxHealth;}}
     [SerializeField] GameObject bloodSpurt;
+    [SerializeField] float hitFlashSpeed;
+    public delegate void OnHealthChangedDelegate();
+    public OnHealthChangedDelegate onHealthChangedCallback;
 
 
     public PlayerStateList pState;
     Rigidbody2D rb;
     Animator animator;
+    SpriteRenderer spriteRenderer;
     float gravity;
     float xAxis, yAxis;
     bool canDash = true;
@@ -92,6 +97,7 @@ public class PlayerController : MonoBehaviour
         pState = GetComponent<PlayerStateList>();
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
         gravity = rb.gravityScale;
     }
 
@@ -115,6 +121,7 @@ public class PlayerController : MonoBehaviour
         StartDash();
         Attack();
         RestoreTimeScale();
+        FlashWhileInvincible();
         
     }
 
@@ -322,6 +329,13 @@ public class PlayerController : MonoBehaviour
         pState.invincible = false;
     }
 
+    void FlashWhileInvincible()
+    {
+        spriteRenderer.material.color = pState.invincible ? 
+            Color.Lerp(Color.white , Color.black, Mathf.PingPong(Time.time * hitFlashSpeed, 1f)) : 
+            Color.white;
+    }
+
     void RestoreTimeScale()
     {
         if(restoreTime)
@@ -369,6 +383,11 @@ public class PlayerController : MonoBehaviour
             if(health != value)
             {
                 health = Mathf.Clamp(value, 0, maxHealth);
+
+                if(onHealthChangedCallback != null)
+                {
+                    onHealthChangedCallback.Invoke();
+                }
             }
         }
     }
