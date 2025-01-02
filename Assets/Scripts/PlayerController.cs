@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -68,6 +69,13 @@ public class PlayerController : MonoBehaviour
     float healTimer;
     [SerializeField] float timeToHeal;
 
+    [Header("Mana Settings")]
+    [SerializeField]Image manaStorage;
+    [SerializeField] float mana;
+    [SerializeField] float manaDrainSpeed;
+    [SerializeField] float manaGain;    
+
+
 
     public PlayerStateList pState;
     Rigidbody2D rb;
@@ -102,6 +110,9 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         gravity = rb.gravityScale;
+
+        Mana = mana;
+        manaStorage.fillAmount = Mana;
     }
 
     void OnDrawGizmos()
@@ -197,6 +208,7 @@ public class PlayerController : MonoBehaviour
                 if(obj.GetComponent<Enemy>() != null)
                 {
                     obj.GetComponent<Enemy>().EnemyHit(damage, (transform.position - obj.transform.position).normalized, recoilStrength);
+                    Mana += manaGain;
                 }
             }
         }
@@ -396,9 +408,23 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    float Mana
+    {
+        get { return mana;}
+
+        set {
+            if( mana != value)
+            {
+                mana = Mathf.Clamp(value, 0, 1);
+                manaStorage.fillAmount = Mana;
+            }
+
+        }
+    }
+
     void Heal()
     {
-        if(Input.GetButton("Heal") && Health < maxHealth && !pState.jumping && !pState.dashing)
+        if(Input.GetButton("Heal") && Health < maxHealth && Mana > 0 && !pState.jumping && !pState.dashing)
         {
             pState.healing = true;
             animator.SetBool("Healing",true);
@@ -408,6 +434,8 @@ public class PlayerController : MonoBehaviour
                 Health++;
                 healTimer = 0;
             }
+
+            Mana -= Time.deltaTime * manaDrainSpeed;
         }
         else
         {
